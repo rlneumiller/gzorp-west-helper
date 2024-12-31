@@ -6,5 +6,9 @@ usage:
 echo "alias west='west-helper'" >> ~/.bashrc
 source ~/.bashrc
 
+
+mkdir -p ~/.config/gzorp-west-helper
+cp /home/arrel/gits/gzorp-west-helper/devicetree_error_patterns.yaml ~/.config/gzorp-west-helper/
+
 # Use west normally - the helper will intercept when needed
 west build -b stm32_min_dev /home/arrel/gits/zephyr-projects/stm32F103C8T6-zephyr-project/blinky-with-i2c -p auto

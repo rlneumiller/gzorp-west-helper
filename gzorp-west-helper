@@ -5,27 +5,42 @@ import subprocess
 import re
 import threading
 import queue
+import yaml
+import os
 from typing import Dict, List, TextIO
 
 DEBUG = True
 
-ERROR_PATTERNS: Dict[str, Dict[str, List[str]]] = {
-    r'__device_dts_ord_DT_N_ALIAS_i2c': {
-        'message': 'I2C device support not configured',
-        'configs': [
-            'CONFIG_I2C=y',
-            'CONFIG_I2C_STM32=y'
-        ]
-    },
-    r'undefined reference to.*gpio': {
-        'message': 'GPIO support not configured',
-        'configs': ['CONFIG_GPIO=y']
-    }
-}
-
 def debug_print(msg: str) -> None:
     if DEBUG:
         print(f"[DEBUG] {msg}")
+
+CONFIG_DIR = os.path.expanduser('~/.config/gzorp-west-helper')
+CONFIG_PATH = os.path.join(CONFIG_DIR, 'devicetree_error_patterns.yaml')
+
+def load_error_patterns() -> Dict:
+    try:
+        with open(CONFIG_PATH, 'r') as f:
+            patterns = yaml.safe_load(f)
+        debug_print(f"Loaded {len(patterns)} error patterns from {CONFIG_PATH}")
+        return patterns
+    except FileNotFoundError:
+        debug_print(f"No config file found at {CONFIG_PATH}, using empty patterns")
+        return {}
+    except yaml.YAMLError as e:
+        debug_print(f"Error parsing {CONFIG_PATH}: {e}")
+        return {}
+
+def save_error_patterns(patterns: Dict) -> None:
+    try:
+        with open(CONFIG_PATH, 'w') as f:
+            yaml.dump(patterns, f, default_flow_style=False)
+        debug_print(f"Saved {len(patterns)} error patterns to {CONFIG_PATH}")
+    except Exception as e:
+            debug_print(f"Error saving patterns to {CONFIG_PATH}: {e}")
+
+
+ERROR_PATTERNS = load_error_patterns()
         
 # Watch a stream for output and check for known error patterns
 def stream_watcher(stream: TextIO, prefix: str, message_queue: queue.Queue) -> None:
