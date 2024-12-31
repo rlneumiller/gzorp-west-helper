@@ -1,0 +1,10 @@
+sudo cp /home/arrel/gits/gzorp-west-helper/gzorp-west-helper /usr/local/bin/
+sudo chmod +x /home/arrel/gits/gzorp-west-helper/gzorp-west-helper
+
+usage:
+# Create an alias in ~/.bashrc
+echo "alias west='west-helper'" >> ~/.bashrc
+source ~/.bashrc
+
+# Use west normally - the helper will intercept when needed
+west build -b stm32_min_dev /home/arrel/gits/zephyr-projects/stm32F103C8T6-zephyr-project/blinky-with-i2c -p auto
