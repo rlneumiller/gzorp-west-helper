@@ -8,11 +8,9 @@ __device_dts_ord_DT_N_ALIAS_i2c:
 
 overlay_config_warning:
   pattern: "error: Aborting due to Kconfig warnings.*OVERLAY_CONFIG=.*\\.overlay"
-  message: >
-    Overlay file location incorrect.
-    1. Move overlay file to: <app>/boards/<board>.overlay
-    2. Remove -DOVERLAY_CONFIG from west build command
+  message: Overlay file location incorrect.
   resolution_steps:
     - "Move overlay file to correct location"
     - "Update build command"
-    - "Clean build directory"
+    - "Clean build directory (rm -rf build)"
+    
