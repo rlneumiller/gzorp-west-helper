@@ -7,38 +7,49 @@ import threading
 import queue
 import yaml
 import os
-from typing import Dict, List, TextIO
+from typing import Dict, List, TextIO, TypedDict
 
-DEBUG = True
+DEBUG = False
 
 def debug_print(msg: str) -> None:
     if DEBUG:
         print(f"[DEBUG] {msg}")
 
 CONFIG_DIR = os.path.expanduser('~/.config/gzorp-west-helper')
-CONFIG_PATH = os.path.join(CONFIG_DIR, 'devicetree_error_patterns.yaml')
+PATTERN_DIR = os.path.join(CONFIG_DIR, 'patterns')
 
-def load_error_patterns() -> Dict:
-    try:
-        with open(CONFIG_PATH, 'r') as f:
-            patterns = yaml.safe_load(f)
-        debug_print(f"Loaded {len(patterns)} error patterns from {CONFIG_PATH}")
-        return patterns
-    except FileNotFoundError:
-        debug_print(f"No config file found at {CONFIG_PATH}, using empty patterns")
-        return {}
-    except yaml.YAMLError as e:
-        debug_print(f"Error parsing {CONFIG_PATH}: {e}")
-        return {}
+class ErrorPattern(TypedDict):
+    message: str
+    resolution_steps: List[str]
+    pattern: str
 
-def save_error_patterns(patterns: Dict) -> None:
+def load_error_patterns() -> Dict[str, ErrorPattern]:
+    patterns = {}
+    if not os.path.exists(PATTERN_DIR):
+        os.makedirs(PATTERN_DIR)
+        
+    for filename in os.listdir(PATTERN_DIR):
+        if filename.endswith('.yaml'):
+            filepath = os.path.join(PATTERN_DIR, filename)
+            try:
+                with open(filepath, 'r') as f:
+                    category_patterns = yaml.safe_load(f)
+                    if category_patterns:
+                        patterns.update(category_patterns)
+                debug_print(f"Loaded {len(category_patterns)} patterns from {filepath}")
+            except (yaml.YAMLError, FileNotFoundError) as e:
+                debug_print(f"Error loading {filepath}: {e}")
+                
+    return patterns
+
+def save_error_patterns(patterns: Dict, category: str) -> None:
+    filepath = os.path.join(PATTERN_DIR, f"{category}.yaml")
     try:
-        with open(CONFIG_PATH, 'w') as f:
+        with open(filepath, 'w') as f:
             yaml.dump(patterns, f, default_flow_style=False)
-        debug_print(f"Saved {len(patterns)} error patterns to {CONFIG_PATH}")
+        debug_print(f"Saved patterns to {filepath}")
     except Exception as e:
-            debug_print(f"Error saving patterns to {CONFIG_PATH}: {e}")
-
+        debug_print(f"Error saving to {filepath}: {e}")
 
 ERROR_PATTERNS = load_error_patterns()
         
