@@ -62,7 +62,7 @@ def stream_watcher(stream: TextIO, prefix: str, message_queue: queue.Queue) -> N
             
             if prefix == 'stderr':
                 if DEBUG:
-                    sys.stderr.write('stderr:passthru: ' + line + '\n')
+                    sys.stderr.write('\x1b[38;5;208mstderr:passthru:\x1b[0m' + line + '\n')
                 else:
                     sys.stderr.write(line + '\n')
                     
