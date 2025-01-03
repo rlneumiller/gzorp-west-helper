@@ -9,7 +9,7 @@ import yaml
 import os
 from typing import Dict, List, TextIO, TypedDict
 
-DEBUG = False
+DEBUG = True
 
 def debug_print(msg: str) -> None:
     if DEBUG:
@@ -20,7 +20,7 @@ PATTERN_DIR = os.path.join(CONFIG_DIR, 'patterns')
 
 class ErrorPattern(TypedDict):
     message: str
-    resolution_steps: List[str]
+    resolution: List[str]
     pattern: str
 
 def load_error_patterns() -> Dict[str, ErrorPattern]:
@@ -37,6 +37,7 @@ def load_error_patterns() -> Dict[str, ErrorPattern]:
                     if category_patterns:
                         patterns.update(category_patterns)
                 debug_print(f"Loaded {len(category_patterns)} patterns from {filepath}")
+                debug_print(f"Loaded patterns: {list(category_patterns.keys())}")
             except (yaml.YAMLError, FileNotFoundError) as e:
                 debug_print(f"Error loading {filepath}: {e}")
                 
@@ -68,10 +69,11 @@ def stream_watcher(stream: TextIO, prefix: str, message_queue: queue.Queue) -> N
                 sys.stderr.flush()
                 
                 # Check for known error patterns
-                for pattern, solution in ERROR_PATTERNS.items():
-                    if re.search(pattern, line):
-                        debug_print(f"Found pattern: {pattern}")
-                        message_queue.put((pattern, solution))
+            for pattern_name, solution in ERROR_PATTERNS.items():
+                regex = solution['pattern']
+                if re.search(regex, line):
+                    debug_print(f"Found pattern: {regex}")
+                    message_queue.put((pattern_name, solution))
             else:
                 if DEBUG:
                     sys.stdout.write('stdout:passthru: ' + line + '\n')
@@ -123,11 +125,12 @@ def monitor_process(args: List[str]) -> int:
         seen_patterns = set()
         while not message_queue.empty():
             pattern, solution = message_queue.get()
+            debug_print(f"Processing error pattern: {pattern}")
             if pattern not in seen_patterns:
                 print(f"\n[WEST-HELPER] {solution['message']}")
-                print("[WEST-HELPER] Add to prj.conf:")
-                for config in solution['configs']:
-                    print(f"[WEST-HELPER]   {config}")
+                print("[WEST-HELPER] Resolution steps:")
+                for step in solution['resolution']:
+                    print(f"[WEST-HELPER]   {step}")
                 seen_patterns.add(pattern)
         print()
     
@@ -139,6 +142,8 @@ def monitor_process(args: List[str]) -> int:
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] != "build":
+        debug_print(f"GZORP!: Running some other command: {' '.join(sys.argv)}")
         subprocess.run(["west"] + sys.argv[1:])
     else:
+        debug_print(f"GZORP!: Running build command: {' '.join(sys.argv)}")
         sys.exit(monitor_process(["west"] + sys.argv[1:]))

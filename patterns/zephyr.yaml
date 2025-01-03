@@ -1,7 +1,7 @@
 __device_dts_ord_DT_N_ALIAS_i2c:
   pattern: "__device_dts_ord_DT_N_ALIAS_i2c"
   message: I2C device support not configured
-  resolution_steps:
+  resolution:
     - "Add CONFIG_I2C=y to prj.conf"
     - "Add CONFIG_I2C_STM32=y to prj.conf"
     - "Rebuild project"
@@ -9,8 +9,14 @@ __device_dts_ord_DT_N_ALIAS_i2c:
 overlay_config_warning:
   pattern: "error: Aborting due to Kconfig warnings.*OVERLAY_CONFIG=.*\\.overlay"
   message: Overlay file location incorrect.
-  resolution_steps:
+  resolution:
     - "Move overlay file to correct location"
     - "Update build command"
     - "Clean build directory (rm -rf build)"
-    
+
+undefined_ring_buffer_api:
+  pattern: "undefined reference to [`'\"]ring_buf_[a-zA-Z0-9_]+[`'\"]"
+  message: "Ring buffer API functions not available - ring buffer support not configured"
+  resolution:
+    - "Add CONFIG_RING_BUFFER=y to prj.conf"
+    - "Rebuild project"

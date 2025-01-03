@@ -1,0 +1,26 @@
+#!/bin/bash
+
+VERSION="1.0.0"
+INSTALL_DIR="/usr/local/bin"
+CONFIG_DIR="/home/arrel/.config/gzorp-west-helper"
+
+echo "Updating gzorp-west-helper v${VERSION}..."
+
+# Create config directory if it doesn't exist
+sudo mkdir -p ${CONFIG_DIR}/patterns
+sudo chown -R $USER:$USER ${CONFIG_DIR}
+
+# Copy main executable
+sudo cp /home/arrel/gits/gzorp-west-helper/gzorp-west-helper ${INSTALL_DIR}/gzorp-west-helper
+sudo chmod +x ${INSTALL_DIR}/gzorp-west-helper
+sudo chown $USER:$USER ${INSTALL_DIR}/gzorp-west-helper
+
+# Copy patterns
+cp -r /home/arrel/gits/gzorp-west-helper/patterns/* ${CONFIG_DIR}/patterns/
+
+# Copy update script
+sudo cp /home/arrel/gits/gzorp-west-helper/update-gzorp-west-helper ${INSTALL_DIR}/update-gzorp-west-helper
+sudo chmod +x ${INSTALL_DIR}/update-gzorp-west-helper
+sudo chown $USER:$USER ${INSTALL_DIR}/update-gzorp-west-helper
+
+echo "gzorp-west-helper files updated successfully"
