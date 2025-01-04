@@ -9,7 +9,8 @@ import yaml
 import os
 from typing import Dict, List, TextIO, TypedDict
 
-DEBUG = True
+# Check for the environment variable to enable debug mode
+DEBUG = os.getenv('GZORP_DEBUG', 'false').lower() in ['1', 'true', 'yes']
 
 def debug_print(msg: str) -> None:
     if DEBUG:
