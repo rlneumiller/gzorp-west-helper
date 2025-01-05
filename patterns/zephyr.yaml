@@ -3,7 +3,7 @@ __device_dts_ord_DT_N_ALIAS_i2c:
   message: I2C device support not configured
   resolution:
     - "Add CONFIG_I2C=y to prj.conf"
-    - "Add CONFIG_I2C_STM32=y to prj.conf"
+    - "Add CONFIG_I2C_STM32=y to prj.conf" (that is if using an stm32 device)
     - "Rebuild project"
 
 overlay_config_warning:
