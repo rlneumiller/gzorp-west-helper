@@ -23,4 +23,4 @@ sudo cp /home/arrel/gits/gzorp-west-helper/update-gzorp-west-helper ${INSTALL_DI
 sudo chmod +x ${INSTALL_DIR}/update-gzorp-west-helper
 sudo chown $USER:$USER ${INSTALL_DIR}/update-gzorp-west-helper
 
-echo "gzorp-west-helper files updated successfully"
+echo "gzorp-west-helper files probably updated successfully"
