@@ -1,0 +1,78 @@
+a0fdcd608c07d5c4ccbdc6dd7a13ea99:
+  pattern: 'error: Aborting due to Kconfig warnings.*OVERLAY_CONFIG=.*\.overlay'
+  message: Overlay file location incorrect.
+  resolution:
+  - Move overlay file to correct location
+  - Update build command
+  - Clean build directory (rm -rf build)
+b1e9f241277abdf981fef082a70e7fe1:
+  pattern: undefined reference to [`'"]ring_buf_[a-zA-Z0-9_]+[`'"]
+  message: Ring buffer API functions not available - ring buffer support not configured
+  resolution:
+  - Add CONFIG_RING_BUFFER=y to prj.conf
+  - Rebuild project
+f95fa7871a5f0b33a322267363f4a380:
+  pattern: __device_dts_ord_DT_N_ALIAS_i2c
+  message: I2C device support not configured
+  resolution:
+  - Add CONFIG_I2C=y to prj.conf
+  - Add CONFIG_I2C_STM32=y to prj.conf
+  - Rebuild project
+beaa0a04af4fad0c06535d4682a1fd98:
+  pattern: '^.*:\d+:\d+: error: ''__device_dts_ord_.*'' undeclared \(first use in
+    this function\);'
+  message: Undeclared device tree variable error
+  resolution: unresolved
+9907429e9c1bf1d6d79150e3ea4f3b27:
+  pattern: '^devicetree error: .*: parse error: expected ''/'' or label reference
+    \(&foo\)'
+  message: Devicetree parse error
+  resolution: unresolved
+c5022fb660ee3d8b1eaea3bd9454396c:
+  pattern: '^devicetree error: .*: parse error: expected number or parenthesized expression'
+  message: Devicetree parse error
+  resolution: unresolved
+b35c27ded2e63cd91c64207a1449ba78:
+  pattern: '^.*:\d+: undefined reference to `usb_enable'''
+  message: Undefined reference to 'usb_enable'
+  resolution: unconfirmed - the loader can't find an implementation of usb_enable()
+    so something is missing from prj.conf
+a39472c07866416ef59c1533e01042ab:
+  pattern: 'warning: USB_CDC_ACM .* was assigned the value ''y'' but got the value
+    ''n''.*'
+  message: USB_CDC_ACM configuration issue
+  resolution: "Ensure that overlay contains &usb_serial {\n  status = \"okay\";\n\
+    \  compatible = \"zephyr,cdc-acm-uart\";\n  label = \"CDC_ACM_0\";\n};\n"
+01e29c3561f67e0618cfc9055391f536:
+  pattern: '.*: warning: attempt to assign the value ''y'' to the undefined symbol
+    USB'
+  message: Attempt to assign the value 'y' to the undefined symbol USB
+  resolution: CONFIG_USB has been deprecated and replaced with CONFIG_USB_DEVICE_DRIVER
+a4b6e355a42ceef69c717bf82300b3dd:
+  pattern: '^.*:\d+:\d+: error: static assertion failed: "node /soc/uart@60043000
+    is not assigned to a USB device controller"'
+  message: 'Static assertion failed: node /soc/uart@60043000 is not assigned to a
+    USB device controller'
+  resolution: 'unconfirmed: &usb0 {
+
+    status = "okay";
+
+    dr_mode = "device";
+
+    pinctrl-0 = <&usb0_pins>;
+
+    pinctrl-names = "default";
+
+    };
+
+    '
+d8c1523b831f09a1414b2be21babe023:
+  pattern: 'warning: NET_L2_WIFI_MGMT .* has direct dependencies NETWORKING with value
+    n, but is currently being y-selected by the following symbols:'
+  message: NET_L2_WIFI_MGMT configuration issue
+  resolution: Add CONFIG_NETWORKING=y to prj.conf
+33ddd747911b9f29c4999b25aa6d014c:
+  pattern: undefined reference to `ethernet_init'
+  message: 'Linker error: ethernet_init symbol is undefined. This typically occurs
+    when Ethernet support is declared but not enabled through Kconfig.'
+  resolution: Add CONFIG_NET_L2_ETHERNET=y to prj.conf
