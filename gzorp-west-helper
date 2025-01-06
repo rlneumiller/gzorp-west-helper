@@ -74,7 +74,7 @@ def stream_watcher(stream: TextIO, prefix: str, message_queue: queue.Queue) -> N
             line = line.rstrip()
             
             if prefix == 'stderr':
-                    sys.stderr.write('\x1b[38;5;208mstderr:passthru:\x1b[0m' + line + '\n')
+                    sys.stderr.write('\x1b[38;5;208m' + line + '\x1b[0m' + '\n')
             else:
                 sys.stdout.write(line + '\n')
 
@@ -149,7 +149,7 @@ def main():
 
         # Print a message if no patterns were matched
         if not pattern_matched:
-            print("\033[95mgzorp-west-helper: No matching pattern found for the current build error.\033[0m")
+            print("\033[95mgzorp-west-helper:\033[0m No matching pattern found for the current build error.")
     else:
         # If the command does not start with "west build -b", run the command directly
         subprocess.run(['west'] + sys.argv[1:], check=True)
