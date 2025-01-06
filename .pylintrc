@@ -1,0 +1,11 @@
+[MASTER]
+ignore=CVS
+ignore-patterns=^.*_test.py$
+
+[MESSAGES CONTROL]
+#disable=C0111,  # Missing docstring
+#        C0103,  # Variable name doesn't conform to snake_case naming style
+#        R0903,  # Too few public methods
+
+[FORMAT]
+max-line-length=88
