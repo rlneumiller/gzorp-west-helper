@@ -14,9 +14,11 @@ from typing import Dict, List, TextIO, TypedDict
 # Check for the environment variable to enable debug mode
 DEBUG = os.getenv('GZORP_DEBUG', 'false').lower() in ['1', 'true', 'yes']
 
+
 def debug_print(msg: str) -> None:
     if DEBUG:
         print(f"[DEBUG] {msg}")
+
 
 CONFIG_DIR = os.path.expanduser('~/.config/gzorp-west-helper')
 PATTERN_DIR = os.path.join(CONFIG_DIR, 'patterns')
@@ -24,6 +26,8 @@ PATTERN_FILE = os.path.join(PATTERN_DIR, 'zephyr.yaml')
 PENDING_RESOLUTION_FILE = os.path.join(PATTERN_DIR, 'zephyr-pending-resolution.yaml')
 
 # Rename the existing pending resolution file to [datetime]-zephyr-pending-resolution.yaml
+
+
 def rename_existing_pending_resolution_file():
     debug_print(f"Looking for existing pending resolution file {PENDING_RESOLUTION_FILE}")
     if os.path.exists(PENDING_RESOLUTION_FILE):
@@ -34,10 +38,12 @@ def rename_existing_pending_resolution_file():
         os.rename(PENDING_RESOLUTION_FILE, new_name)
         debug_print(f"Renamed existing pending resolution file to {new_name}")
 
+
 class ErrorPattern(TypedDict):
     message: str
     resolution: List[str]
     pattern: str
+
 
 def load_error_patterns() -> Dict[str, ErrorPattern]:
     patterns = {}
@@ -50,6 +56,7 @@ def load_error_patterns() -> Dict[str, ErrorPattern]:
             debug_print(f"Error loading {PATTERN_FILE}: {e}")
     return patterns
 
+
 def save_error_patterns(patterns: Dict[str, ErrorPattern], filepath: str) -> None:
     try:
         with open(filepath, 'w') as f:
@@ -58,25 +65,42 @@ def save_error_patterns(patterns: Dict[str, ErrorPattern], filepath: str) -> Non
     except Exception as e:
         debug_print(f"Error saving to {filepath}: {e}")
 
+
 def hash_string(s: str) -> str:
     return hashlib.md5(s.encode()).hexdigest()
+
 
 ERROR_PATTERNS = load_error_patterns()
 
 # Flag to track if any pattern was matched
 pattern_matched = False
 
+# Define the patterns to ignore
+DO_NOT_PASS_THRU_PATTERNS = [
+    re.compile(r"Serial port /dev/ttyS\d+"),
+    re.compile(r"/dev/ttyS\d+ failed to connect: Could not open /dev/ttyS\d+, the port is busy or doesn't exist."),
+    re.compile(r"\(Could not configure port: \(5, 'Input/output error'\)\)")
+]
+
 # Watch a stream for output and check for known error patterns
+
+
 def stream_watcher(stream: TextIO, prefix: str, message_queue: queue.Queue) -> None:
     global pattern_matched
     try:
         for line in iter(stream.readline, ''):
             line = line.rstrip()
-            
-            if prefix == 'stderr':
+
+            # Check if the line matches any of the ignore patterns
+            if any(pattern.match(line) for pattern in DO_NOT_PASS_THRU_PATTERNS):
+                continue
+
+            # Only output the line if it is not empty
+            if line:
+                if prefix == 'stderr':
                     sys.stderr.write('\x1b[38;5;208m' + line + '\x1b[0m' + '\n')
-            else:
-                sys.stdout.write(line + '\n')
+                else:
+                    sys.stdout.write(line + '\n')
 
             # Check for matching patterns
             for pattern_name, pattern in ERROR_PATTERNS.items():
@@ -87,12 +111,13 @@ def stream_watcher(stream: TextIO, prefix: str, message_queue: queue.Queue) -> N
     except Exception as e:
         debug_print(f"Error in stream_watcher: {e}")
 
+
 def main():
     global pattern_matched
     message_queue = queue.Queue()
 
-    # Check if the command starts with "west build -b"
-    if len(sys.argv) > 1 and sys.argv[1] == 'build' and sys.argv[2] == '-b':
+    # Check if the command starts with "west build -b" or "west flash"
+    if len(sys.argv) > 1 and (sys.argv[1] == 'build' and sys.argv[2] == '-b' or sys.argv[1] == 'flash'):
         # Run the west command
         process = subprocess.Popen(['west'] + sys.argv[1:], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
@@ -153,6 +178,7 @@ def main():
     else:
         # If the command does not start with "west build -b", run the command directly
         subprocess.run(['west'] + sys.argv[1:], check=True)
+
 
 if __name__ == "__main__":
     main()
