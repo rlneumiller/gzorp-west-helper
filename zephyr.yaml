@@ -76,3 +76,9 @@ d8c1523b831f09a1414b2be21babe023:
   message: 'Linker error: ethernet_init symbol is undefined. This typically occurs
     when Ethernet support is declared but not enabled through Kconfig.'
   resolution: Add CONFIG_NET_L2_ETHERNET=y to prj.conf
+new pattern:
+  pattern: 'E (\d+) quad_psram: PSRAM ID read error: 0x00ffffff, PSRAM chip not found or not supported, or wrong PSRAM line mode
+    Failed to Initialize external RAM, aborting.'
+  message: 'PSRAM initialization error'
+  resolution: 'PSRAM is probably configed as quad spi but it should be octal spi, additionally the size may need updating. See /home/arrel/gits/zephyr-projects/ble_serial_bridge/ble_central_client/.config-after'
+
