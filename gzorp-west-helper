@@ -25,7 +25,9 @@ PATTERN_DIR = os.path.join(CONFIG_DIR, 'patterns')
 PATTERN_FILE = os.path.join(PATTERN_DIR, 'zephyr.yaml')
 PENDING_RESOLUTION_FILE = os.path.join(PATTERN_DIR, 'zephyr-pending-resolution.yaml')
 
-# Rename the existing pending resolution file to [datetime]-zephyr-pending-resolution.yaml
+# TODO: Create PENDING_RESOLUTION_FILE if it does not exist
+
+# TODO Rename the existing pending resolution file to [date-time]-zephyr-pending-resolution.yaml
 
 
 def rename_existing_pending_resolution_file():
@@ -112,6 +114,12 @@ def stream_watcher(stream: TextIO, prefix: str, message_queue: queue.Queue) -> N
         debug_print(f"Error in stream_watcher: {e}")
 
 
+# Don't recall if this is working to ignore the esp specific 'make monitor' errors
+def filter_output(line):
+    exclude_patterns = ['_WindowOverflow4', '_stext at ??:?']  # These are errors that to be ignored according to Espressif
+    return not any(pattern in line for pattern in exclude_patterns)
+
+
 def main():
     global pattern_matched
     message_queue = queue.Queue()
@@ -147,9 +155,10 @@ def main():
                 }
                 break  # Stop further processing after the first unmatched error
             else:
-                print(f"Matched pattern: {pattern_name}")
-                print(f"Message: {pattern['message']}")
-                print(f"Resolution: {pattern['resolution']}")
+                if filter_output(pattern['message']):
+                    print(f"Matched pattern: {pattern_name}")
+                    print(f"Message: {pattern['message']}")
+                    print(f"Resolution: {pattern['resolution']}")
 
         # Save new patterns to zephyr-pending-resolution.yaml
         if new_patterns:
