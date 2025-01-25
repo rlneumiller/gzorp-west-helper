@@ -16,7 +16,7 @@ setup(
     url="https://github.com/rlneumiller/west_helper",
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
@@ -25,4 +25,5 @@ setup(
             'west_helper=west_helper.main:main',
         ],
     },
+    license="Apache License 2.0",
 )
