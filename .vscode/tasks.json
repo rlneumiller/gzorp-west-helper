@@ -1,0 +1,11 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Activate Zephyr Virtual Environment",
+            "type": "shell",
+            "command": "source ~/zephyrproject/.venv/bin/activate && exec $SHELL",
+            "problemMatcher": []
+        }
+    ]
+}

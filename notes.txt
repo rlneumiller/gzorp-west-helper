@@ -1,5 +1,5 @@
-sudo cp /home/arrel/gits/gzorp-west-helper/gzorp-west-helper /usr/local/bin/
-sudo chmod +x /home/arrel/gits/gzorp-west-helper/gzorp-west-helper
+sudo cp /home/arrel/gits/west_helper/west_helper /usr/local/bin/
+sudo chmod +x /home/arrel/gits/west_helper/west_helper
 
 usage:
 # Create an alias in ~/.bashrc
@@ -7,8 +7,13 @@ echo "alias west='west-helper'" >> ~/.bashrc
 source ~/.bashrc
 
 
-mkdir -p ~/.config/gzorp-west-helper
-cp /home/arrel/gits/gzorp-west-helper/devicetree_error_patterns.yaml ~/.config/gzorp-west-helper/
+mkdir -p ~/.config/west_helper
+cp /home/arrel/gits/west_helper/devicetree_error_patterns.yaml ~/.config/west_helper/
 
 # Use west normally - the helper will intercept when needed
 west build -b stm32_min_dev /home/arrel/gits/zephyr-projects/stm32F103C8T6-zephyr-project/blinky-with-i2c -p auto
+
+########################################################################
+# Moving west_helper to a proper pip installable structure 
+# When in zephyr\west venv, to install in editable mode for development
+pip install -e .

@@ -1,4 +1,4 @@
-# gzorp-west-helper
+# west_helper
 
 ##This is very much in the early stages of development so ...
 
