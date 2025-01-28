@@ -3,7 +3,7 @@ sudo chmod +x /home/arrel/gits/west_helper/west_helper
 
 usage:
 # Create an alias in ~/.bashrc
-echo "alias west='west-helper'" >> ~/.bashrc
+echo "alias west='west_helper'" >> ~/.bashrc
 source ~/.bashrc
 
 

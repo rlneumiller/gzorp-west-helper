@@ -190,6 +190,28 @@ def handle_west_flash(args, message_queue):
         print_message("No matching pattern found for the current flash error.")
 
 
+def print_args(args):
+    """Print received arguments safely"""
+    message = "Checking if we can help with this command<br>Arguments received:<br>"
+    for i, arg in enumerate(args):
+        message += f"argv[{i}] '{arg}'<br>"
+    print_message(message)
+
+
+def pass_it_thru(args):
+    """
+    Pass command through to west without modification.
+
+    Args:
+        args: List of command arguments to pass to west
+    """
+    try:
+        subprocess.run(['west'] + args[1:], check=True)
+    except subprocess.CalledProcessError as e:
+        print_message(f"West command failed with exit code {e.returncode}")
+        sys.exit(e.returncode)
+
+
 def main():
     message_queue = queue.Queue()
     verify_required_execution_environment()
@@ -199,20 +221,27 @@ def main():
                       "I'm designed to help with Zephyr's west utility, which requires a zephyr build environment:")
         sys.exit(1)
 
-    # Check if the command starts with "west build -b"
-    print_message(f"Checking if we can help with this command<br>Arguments received:<br>argv[{0}] '{sys.argv[0]}<br>"
-                  + f"argv[{1}] '{sys.argv[1]}<br>" + f"argv[{2}] '{sys.argv[2]}<br>"
-                  + f"argv[{3}] '{sys.argv[3]}<br>" + f"argv[{4}] '{sys.argv[4]}<br>")
+    if len(sys.argv) < 2:
+        print_message("Nothing for us to do here. Passing thru.")
+        subprocess.run(['west'], check=True)
+        return
 
-    if len(sys.argv) > 4 and sys.argv[1] == 'build' and sys.argv[2] == '-b':
+    print_args(sys.argv)
+
+    # Handle different west commands
+    if sys.argv[1] == 'completion':
+        # Pass completion commands directly to west
+        pass_it_thru(sys.argv)
+    elif len(sys.argv) > 4 and sys.argv[1] == 'build' and sys.argv[2] == '-b':
         handle_west_build(sys.argv, message_queue)
     elif len(sys.argv) > 2 and sys.argv[2] == 'flash':
         handle_west_flash(sys.argv, message_queue)
     else:
         print_message("I'm passing the command thru (not helping).")
+        pass_it_thru(sys.argv)
 
         # Run the west command
-        subprocess.run(['west'] + sys.argv[1:], check=True)
+        pass_it_thru(sys.argv)
 
 
 if __name__ == "__main__":
