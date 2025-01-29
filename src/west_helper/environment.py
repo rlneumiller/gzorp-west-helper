@@ -41,7 +41,7 @@ def validate_zephyr_environment() -> None:
 
     zephyr_base_dir = os.path.abspath(ZEPHYR_BASE)
     if not compare_paths(current_dir, zephyr_base_dir):
-        raise ValueError(
+        print_message(
             f"Current directory ({current_dir}) must be "
             f"ZEPHYR_BASE ({zephyr_base_dir})"
         )
