@@ -237,10 +237,7 @@ def main():
     elif len(sys.argv) > 2 and sys.argv[2] == 'flash':
         handle_west_flash(sys.argv, message_queue)
     else:
-        print_message("I'm passing the command thru (not helping).")
-        pass_it_thru(sys.argv)
-
-        # Run the west command
+        print_message("Passing the command thru (not helping).")
         pass_it_thru(sys.argv)
 
 
