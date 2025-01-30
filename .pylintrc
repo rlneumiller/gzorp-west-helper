@@ -8,4 +8,4 @@ ignore-patterns=^.*_test.py$
 #        R0903,  # Too few public methods
 
 [FORMAT]
-max-line-length=88
+max-line-length=120
