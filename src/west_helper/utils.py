@@ -25,7 +25,8 @@ def print_message(msg: str) -> None:
         msg: String containing message with <br> tags for line breaks
 
     Examples:
-        >>> print_message("First line<br>Second line")
+        print_message("First line<br>Second line")
+        # Outputs:
         west_helper: First line
                           Second line
     """
@@ -67,8 +68,8 @@ def compare_paths(path1: Union[str, Path], path2: Union[str, Path]) -> bool:
         return False
 
 
-def calculate_hash(pattern_text):
-    return hashlib.md5(pattern_text.encode()).hexdigest()
+def get_pattern_hash(s: str) -> str:
+    return hashlib.md5(s.encode()).hexdigest()
 
 
 def ensure_default_pattern():
@@ -78,23 +79,23 @@ def ensure_default_pattern():
     if not os.path.exists(ZEPHYR_PATTERN_FILE):
         default_pattern = {
             "e3b0c44298fc1c149afbf4c8996fb924": {
-                "pattern": "error: Aborting due to Kconfig warnings.*OVERLAY_CONFIG=.*\\.overlay",
-                "message": "Overlay file location incorrect.",
+                "pattern": "This is a placeholder pattern",
+                "message": "This is a placeholder message.",
                 "resolution": [
-                    "Move overlay file to correct location",
-                    "Update build command",
-                    "Clean build directory (rm -rf build)"
+                    "This is a placeholder resolution.",
+                    "This is another placeholder resolution.",
+                    "This is yet another placeholder resolution."
                 ]
             }
         }
 
         with open(ZEPHYR_PATTERN_FILE, 'w') as f:
-            print_message(f"Creating default pattern file: {ZEPHYR_PATTERN_FILE}")
             yaml.dump(default_pattern, f, default_flow_style=False)
+            print_message(f"Created default pattern file: {ZEPHYR_PATTERN_FILE}")
 
 
 def update_pattern_hashes():
-    print_message("Updating pattern hashes...")
+    print_message("Checking for pattern hashes that need updating...")
     ensure_default_pattern()
     modified_hashes = []
     for root, _, files in os.walk(PATTERNS_DIR):
@@ -108,8 +109,9 @@ def update_pattern_hashes():
             for pattern_key, pattern_value in data.items():
                 if isinstance(pattern_value, dict) and 'pattern' in pattern_value:
                     pattern_text = pattern_value['pattern']
-                    pattern_hash = calculate_hash(pattern_text)
+                    pattern_hash = get_pattern_hash(pattern_text)
                     if pattern_key != pattern_hash:
+                        print_message(f"Updating pattern hash: {pattern_key} -> {pattern_hash}")
                         updated_data[pattern_hash] = pattern_value
                         modified_hashes.append((file_path, pattern_text, pattern_hash))
                     else:
@@ -117,14 +119,11 @@ def update_pattern_hashes():
 
             # Fix: Use dump() instead of safe_dump() and set sort_keys=False
             with open(file_path, 'w') as f:
-                print_message(f"Updating pattern hashes in {file_path}")
+                print_message(f"Updated pattern hashes in {file_path}")
                 yaml.dump(updated_data, f, default_flow_style=False, sort_keys=False)
 
+    print_message(f"Updated {len(modified_hashes)} pattern hashes.")
     return modified_hashes
-
-
-def hash_string(s: str) -> str:
-    return hashlib.md5(s.encode()).hexdigest()
 
 
 def verify_data_integrity(expected_data, actual_data, file_path):

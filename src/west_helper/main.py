@@ -13,33 +13,7 @@ from .constants import PENDING_RESOLUTION_FILE
 from .environment import verify_required_execution_environment
 from .patterns import filter_output, save_error_patterns
 from .watcher import stream_watcher
-from .utils import hash_string, print_message
-
-# CONFIG_DIR = os.path.expanduser('~/.config/west_helper')
-# PATTERN_DIR = os.path.join(CONFIG_DIR, 'patterns')
-# PATTERN_FILE = os.path.join(PATTERN_DIR, 'zephyr.yaml')
-# PENDING_RESOLUTION_FILE = os.path.join(PATTERN_DIR, 'zephyr-pending-resolution.yaml')
-# ZEPHYR_BASE = os.getenv('ZEPHYR_BASE')
-# if ZEPHYR_BASE:
-#    ZEPHYR_BUILD_DIR = os.path.join(ZEPHYR_BASE, 'build')
-#    ZEPHYR_BUILD_ZEPHYR_DIR = os.path.join(ZEPHYR_BUILD_DIR, 'zephyr')
-#    ZEPHYR_CONFIG_FILE = os.path.join(ZEPHYR_BUILD_ZEPHYR_DIR, '.config')
-
-
-# Define the patterns to ignore
-# DO_NOT_PASS_THRU_PATTERNS = [
-#     # port related patterns
-#     re.compile(r"Serial port /dev/ttyS\d+"),
-#     re.compile(r"/dev/ttyS\d+ failed to connect: Could not open /dev/ttyS\d+, the port is busy or doesn't exist."),
-#     re.compile(r"\(Could not configure port: \(5, 'Input/output error'\)\)"),
-#     # Espressif specific patterns
-#     re.compile(r"_WindowOverflow4"),
-#     re.compile(r"_stext at \?\?:\?")
-# ]
-
-
-# TODO: Create PENDING_RESOLUTION_FILE if it does not exist
-# TODO Rename the existing pending resolution file to [date-time]-zephyr-pending-resolution.yaml
+from .utils import get_pattern_hash, print_message, update_pattern_hashes
 
 
 pattern_matched_local = False
@@ -84,10 +58,7 @@ def save_build_config(app_source_dir: str) -> None:
         )
 
 
-def handle_west_build(args, message_queue):
-    # Extracted from the "west build" block
-    app_source_dir = args[4]
-    save_build_config(app_source_dir)
+def handle_west_command(args, message_queue, unmatched_error_message):
     process = subprocess.Popen(['west'] + args[1:], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     stdout_thread = threading.Thread(target=stream_watcher, args=(process.stdout, 'stdout', message_queue))
     stderr_thread = threading.Thread(target=stream_watcher, args=(process.stderr, 'stderr', message_queue))
@@ -98,27 +69,15 @@ def handle_west_build(args, message_queue):
     stderr_thread.join()
 
     new_patterns = {}
-    # TODO: Load and utilize the existing patterns
-    # previously_found_patterns = load_error_patterns()
     pattern_matched_local = False
-
-    while not message_queue.empty():
-        msg_type, data = message_queue.get()
-        if msg_type == 'pattern_matched':
-            pattern_matched_local = True
-        else:
-            pass
-
-    if not pattern_matched_local:
-        print_message("No matching pattern found for the current build error<br>")
 
     while not message_queue.empty():
         pattern_name, pattern = message_queue.get()
         if pattern_name == 'unmatched_error':
-            error_hash = hash_string(pattern)
+            error_hash = get_pattern_hash(pattern)
             new_patterns[error_hash] = {
                 'pattern': pattern,
-                'message': 'Unmatched build error',
+                'message': unmatched_error_message,
                 'resolution': [f'Resolution verification pending: {pattern}']
             }
             break
@@ -138,103 +97,26 @@ def handle_west_build(args, message_queue):
                 existing_patterns = {}
         else:
             existing_patterns = {}
-
         existing_patterns.update(new_patterns)
         save_error_patterns(existing_patterns, PENDING_RESOLUTION_FILE)
+
+    if not pattern_matched_local:
+        print_message(f"No matching pattern found for the current {unmatched_error_message.lower()}.")
+
+
+def handle_west_build(args, message_queue):
+    app_source_dir = args[4]
+    save_build_config(app_source_dir)
+    handle_west_command(args, message_queue, 'Unmatched build error')
 
 
 def handle_west_flash(args, message_queue):
-    # Extracted from the "west flash" block
-    process = subprocess.Popen(['west'] + args[1:], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    stdout_thread = threading.Thread(target=stream_watcher, args=(process.stdout, 'stdout', message_queue))
-    stderr_thread = threading.Thread(target=stream_watcher, args=(process.stderr, 'stderr', message_queue))
-    stdout_thread.start()
-    stderr_thread.start()
-    process.wait()
-    stdout_thread.join()
-    stderr_thread.join()
-
-    new_patterns = {}
-    pattern_matched_local = False
-
-    while not message_queue.empty():
-        pattern_name, pattern = message_queue.get()
-        if pattern_name == 'unmatched_error':
-            error_hash = hash_string(pattern)
-            new_patterns[error_hash] = {
-                'pattern': pattern,
-                'message': 'Unmatched flash error',
-                'resolution': [f'Resolution verification pending: {pattern}']
-            }
-            break
-        else:
-            if filter_output(pattern['message']):
-                print_message(f"Matched pattern: {pattern_name}")
-                print_message(f"Message: {pattern['message']}")
-                print_message(f"Resolution: {pattern['resolution']}")
-
-    if new_patterns:
-        if os.path.exists(PENDING_RESOLUTION_FILE):
-            try:
-                with open(PENDING_RESOLUTION_FILE, 'r') as f:
-                    existing_patterns = yaml.safe_load(f) or {}
-            except (yaml.YAMLError, FileNotFoundError) as e:
-                print_message(f"Error loading {PENDING_RESOLUTION_FILE}: {e}")
-                existing_patterns = {}
-        else:
-            existing_patterns = {}
-        existing_patterns.update(new_patterns)
-        save_error_patterns(existing_patterns, PENDING_RESOLUTION_FILE)
-
-    if not pattern_matched_local:
-        print_message("No matching pattern found for the current flash error.")
+    handle_west_command(args, message_queue, 'Unmatched flash error')
 
 
 def handle_west_espressif_monitor(args, message_queue):
     print_message("Handling west espressif monitor command")
-    process = subprocess.Popen(['west'] + args[1:], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    stdout_thread = threading.Thread(target=stream_watcher, args=(process.stdout, 'stdout', message_queue))
-    stderr_thread = threading.Thread(target=stream_watcher, args=(process.stderr, 'stderr', message_queue))
-    stdout_thread.start()
-    stderr_thread.start()
-    process.wait()
-    stdout_thread.join()
-    stderr_thread.join()
-
-    new_patterns = {}
-    pattern_matched_local = False
-
-    while not message_queue.empty():
-        pattern_name, pattern = message_queue.get()
-        if pattern_name == 'unmatched_error':
-            error_hash = hash_string(pattern)
-            new_patterns[error_hash] = {
-                'pattern': pattern,
-                'message': 'Unmatched espressif monitor error',
-                'resolution': [f'Resolution verification pending: {pattern}']
-            }
-            break
-        else:
-            if filter_output(pattern['message']):
-                print_message(f"Matched pattern: {pattern_name}")
-                print_message(f"Message: {pattern['message']}")
-                print_message(f"Resolution: {pattern['resolution']}")
-
-    if new_patterns:
-        if os.path.exists(PENDING_RESOLUTION_FILE):
-            try:
-                with open(PENDING_RESOLUTION_FILE, 'r') as f:
-                    existing_patterns = yaml.safe_load(f) or {}
-            except (yaml.YAMLError, FileNotFoundError) as e:
-                print_message(f"Error loading {PENDING_RESOLUTION_FILE}: {e}")
-                existing_patterns = {}
-        else:
-            existing_patterns = {}
-        existing_patterns.update(new_patterns)
-        save_error_patterns(existing_patterns, PENDING_RESOLUTION_FILE)
-
-    if not pattern_matched_local:
-        print_message("No matching pattern found for the current espressif monitor error.")
+    handle_west_command(args, message_queue, 'Unmatched espressif monitor error')
 
 
 def print_args(args):
@@ -290,6 +172,7 @@ def main():
         print_message("Passing the command thru (not helping).")
         pass_it_thru(sys.argv)
 
+    update_pattern_hashes()
 
 if __name__ == "__main__":
     main()
