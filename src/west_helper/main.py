@@ -53,8 +53,8 @@ def save_build_config(app_source_dir: str) -> None:
         print_message(f"Copied previous builds' generated Kconfig file to {config_filepath}")
     except Exception as e:
         print_message(
-            f"There was an error attempting to save the previous builds' Kconfig generated file to {config_filepath}: {e}<br>"
-            "You might wanna get that looked at"
+            f"There was an error attempting to save the previous builds' Kconfig generated file to "
+            f"{config_filepath}: {e}<br>You might wanna get that looked at"
         )
 
 
