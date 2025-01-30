@@ -190,9 +190,57 @@ def handle_west_flash(args, message_queue):
         print_message("No matching pattern found for the current flash error.")
 
 
+def handle_west_espressif_monitor(args, message_queue):
+    print_message("Handling west espressif monitor command")
+    process = subprocess.Popen(['west'] + args[1:], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    stdout_thread = threading.Thread(target=stream_watcher, args=(process.stdout, 'stdout', message_queue))
+    stderr_thread = threading.Thread(target=stream_watcher, args=(process.stderr, 'stderr', message_queue))
+    stdout_thread.start()
+    stderr_thread.start()
+    process.wait()
+    stdout_thread.join()
+    stderr_thread.join()
+
+    new_patterns = {}
+    pattern_matched_local = False
+
+    while not message_queue.empty():
+        pattern_name, pattern = message_queue.get()
+        if pattern_name == 'unmatched_error':
+            error_hash = hash_string(pattern)
+            new_patterns[error_hash] = {
+                'pattern': pattern,
+                'message': 'Unmatched espressif monitor error',
+                'resolution': [f'Resolution verification pending: {pattern}']
+            }
+            break
+        else:
+            if filter_output(pattern['message']):
+                print_message(f"Matched pattern: {pattern_name}")
+                print_message(f"Message: {pattern['message']}")
+                print_message(f"Resolution: {pattern['resolution']}")
+
+    if new_patterns:
+        if os.path.exists(PENDING_RESOLUTION_FILE):
+            try:
+                with open(PENDING_RESOLUTION_FILE, 'r') as f:
+                    existing_patterns = yaml.safe_load(f) or {}
+            except (yaml.YAMLError, FileNotFoundError) as e:
+                print_message(f"Error loading {PENDING_RESOLUTION_FILE}: {e}")
+                existing_patterns = {}
+        else:
+            existing_patterns = {}
+        existing_patterns.update(new_patterns)
+        save_error_patterns(existing_patterns, PENDING_RESOLUTION_FILE)
+
+    if not pattern_matched_local:
+        print_message("No matching pattern found for the current espressif monitor error.")
+
+
 def print_args(args):
     """Print received arguments safely"""
     message = "Checking if we can help with this command<br>Arguments received:<br>"
+    print_message(f"Received {len(args)} arguments")
     for i, arg in enumerate(args):
         message += f"argv[{i}] '{arg}'<br>"
     print_message(message)
@@ -234,8 +282,10 @@ def main():
         pass_it_thru(sys.argv)
     elif len(sys.argv) > 4 and sys.argv[1] == 'build' and sys.argv[2] == '-b':
         handle_west_build(sys.argv, message_queue)
-    elif len(sys.argv) > 2 and sys.argv[2] == 'flash':
+    elif len(sys.argv) > 2 and sys.argv[1] == 'flash':
         handle_west_flash(sys.argv, message_queue)
+    elif len(sys.argv) > 2 and sys.argv[1] == 'espressif' and sys.argv[2] == 'monitor':
+        handle_west_espressif_monitor(sys.argv, message_queue)
     else:
         print_message("Passing the command thru (not helping).")
         pass_it_thru(sys.argv)
