@@ -2,12 +2,29 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File",
+            "name": "Python dbg: west flash",
             "type": "debugpy",
             "request": "launch",
-            "program": "${file}",
+            "program": "/home/arrel/zephyrproject/.venv/bin/west_helper",
+            "args": [
+                "flash"
+            ],
+            "cwd": "/home/arrel/zephyrproject/zephyr",
             "console": "integratedTerminal",
-            "preLaunchTask": "Activate Zephyr Virtual Environment"
+            "justMyCode": true
+        },
+        {
+            "name": "Python dbg: west espressif monitor",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "/home/arrel/zephyrproject/.venv/bin/west_helper",
+            "args": [
+                "espressif",
+                "monitor"
+            ],
+            "cwd": "/home/arrel/zephyrproject/zephyr",
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }
