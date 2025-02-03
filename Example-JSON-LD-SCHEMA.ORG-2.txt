@@ -1,0 +1,12 @@
+# Example-JSON-LD-SCHEMA.ORG-2.json explained
+
+description: Provides a brief description of the dataset's purpose.
+version: Indicates the version of the dataset.
+patterns: An array containing individual pattern objects.
+category: Specifies the type of log message (e.g., Error, Warning, Info).
+severity: Indicates the severity level of the issue (e.g., High, Medium, Low).
+tags: An array of tags to help categorize and search for patterns.
+label: A label that can be used for supervised learning tasks.
+features: A nested object containing features that describe the pattern, useful for ML models.
+context: A nested object providing additional context, such as timestamp, system state, and previous errors, which can be useful for RL models.
+

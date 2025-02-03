@@ -1,0 +1,60 @@
+{
+  "description": "Dataset of patterns for debugging and logfile analysis, useful for ML/RL contexts",
+  "version": "1.0",
+  "patterns": [
+    {
+      "@context": "https://schema.org/",
+      "@type": "SoftwareSourceCode",
+      "category": "Error",
+      "identifier": "882dd80ba32808f80a49ddb72adb3292",
+      "pattern": "E (\\d+) phy_init: failed to allocate \\d+ bytes for RF calibration data",
+      "message": "RF calibration data allocation failure",
+      "resolution": [
+        "Insufficient system heap memory available",
+        "Add CONFIG_HEAP_MEM_POOL_SIZE=4096 to prj.conf (increase the value if it still occurs, presuming you have the memory available)"
+      ],
+      "severity": "High",
+      "tags": ["memory", "RF calibration", "allocation"],
+      "label": "memory_issue",
+      "features": {
+        "error_code": "E",
+        "component": "phy_init",
+        "failure_type": "allocation",
+        "data_type": "RF calibration data"
+      },
+      "context": {
+        "timestamp": "2023-10-01T12:00:00Z",
+        "system_state": "initialization",
+        "previous_errors": 2
+      },
+      "frequency": 35
+    },
+    {
+      "@context": "https://schema.org/",
+      "@type": "SoftwareSourceCode",
+      "category": "Warning",
+      "identifier": "1234567890abcdef1234567890abcdef",
+      "pattern": "W (\\d+) wifi_init: failed to connect to network",
+      "message": "WiFi connection failure",
+      "resolution": [
+        "Check if the WiFi network is available",
+        "Ensure the correct WiFi credentials are provided"
+      ],
+      "severity": "Medium",
+      "tags": ["WiFi", "connection", "network"],
+      "label": "network_issue",
+      "features": {
+        "error_code": "W",
+        "component": "wifi_init",
+        "failure_type": "connection",
+        "data_type": "network"
+      },
+      "context": {
+        "timestamp": "2023-10-01T12:05:00Z",
+        "system_state": "operational",
+        "previous_errors": 0
+      },
+      "frequency": 20
+    }
+  ]
+}

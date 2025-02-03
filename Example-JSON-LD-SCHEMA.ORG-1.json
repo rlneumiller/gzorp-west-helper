@@ -1,0 +1,34 @@
+{
+  "description": "Collection of patterns for debugging and logfile analysis",
+  "version": "1.0",
+  "patterns": [
+    {
+      "@context": "https://schema.org/",
+      "@type": "SoftwareSourceCode",
+      "category": "Error",
+      "identifier": "882dd80ba32808f80a49ddb72adb3292",
+      "pattern": "E (\\d+) phy_init: failed to allocate \\d+ bytes for RF calibration data",
+      "message": "RF calibration data allocation failure",
+      "resolution": [
+        "Insufficient system heap memory available",
+        "Add CONFIG_HEAP_MEM_POOL_SIZE=4096 to prj.conf (increase the value if it still occurs, presuming you have the memory available)"
+      ],
+      "severity": "High",
+      "tags": ["memory", "RF calibration", "allocation"]
+    },
+    {
+      "@context": "https://schema.org/",
+      "@type": "SoftwareSourceCode",
+      "category": "Warning",
+      "identifier": "1234567890abcdef1234567890abcdef",
+      "pattern": "W (\\d+) wifi_init: failed to connect to network",
+      "message": "WiFi connection failure",
+      "resolution": [
+        "Check if the WiFi network is available",
+        "Ensure the correct WiFi credentials are provided"
+      ],
+      "severity": "Medium",
+      "tags": ["WiFi", "connection", "network"]
+    }
+  ]
+}

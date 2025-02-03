@@ -1,0 +1,8 @@
+# Example-JSON-LD-SCHEMA.ORG-1.json
+
+description: Provides a brief description of the purpose of the JSON file.
+version: Indicates the version of the pattern collection.
+patterns: An array containing individual pattern objects.
+category: Specifies the type of log message (e.g., Error, Warning, Info).
+severity: Indicates the severity level of the issue (e.g., High, Medium, Low).
+tags: An array of tags to help categorize and search for patterns.
