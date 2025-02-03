@@ -6,6 +6,20 @@
             "type": "shell",
             "command": "source ~/zephyrproject/.venv/bin/activate && exec $SHELL",
             "problemMatcher": []
+        },
+        {
+            "label": "Run Espressif Monitor",
+            "type": "shell",
+            "command": "west espressif monitor",
+            "options": {
+                "cwd": "/home/arrel/zephyrproject/zephyr",
+                "env": {
+                    "PYTHONPATH": "/home/arrel/zephyrproject/modules/hal/espressif/tools:${env:PYTHONPATH}",
+                    "VIRTUAL_ENV": "/home/arrel/zephyrproject/.venv",
+                    "PATH": "/home/arrel/zephyrproject/.venv/bin:${env:PATH}"
+                }
+            },
+            "problemMatcher": []
         }
     ]
 }

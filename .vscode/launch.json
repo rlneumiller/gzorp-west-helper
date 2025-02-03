@@ -14,17 +14,21 @@
             "justMyCode": true
         },
         {
-            "name": "Python dbg: west espressif monitor",
+            "name": "Python: Run idf_monitor.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "/home/arrel/zephyrproject/.venv/bin/west_helper",
-            "args": [
-                "espressif",
-                "monitor"
-            ],
-            "cwd": "/home/arrel/zephyrproject/zephyr",
+            "program": "/home/arrel/zephyrproject/modules/hal/espressif/tools/idf_monitor/idf_monitor.py",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": true,
+            "args": [
+                "/home/arrel/zephyrproject/zephyr/build/zephyr/zephyr.elf"
+            ],
+            "env": {
+                "PYTHONPATH": "/home/arrel/zephyrproject/modules/hal/espressif/tools:${env:PYTHONPATH}",
+                "VIRTUAL_ENV": "/home/arrel/zephyrproject/.venv",
+                "PATH": "/home/arrel/zephyrproject/.venv/bin:${env:PATH}"
+            },
+            "cwd": "/home/arrel/zephyrproject/zephyr"
         }
     ]
 }

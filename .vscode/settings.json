@@ -11,4 +11,5 @@
     "python.analysis.typeCheckingMode": "basic",
     "python.testing.pytestEnabled": true,
     "task.allowAutomaticTasks": "on",
+    "python.defaultInterpreterPath": "/home/arrel/zephyrproject/.venv/bin/python"
 }
