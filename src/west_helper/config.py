@@ -11,4 +11,4 @@ if not ZEPHYR_BASE:
 
 ZEPHYR_BUILD_DIR = os.path.join(ZEPHYR_BASE, 'build')
 ZEPHYR_BUILD_ZEPHYR_DIR = os.path.join(ZEPHYR_BUILD_DIR, 'zephyr')
-ZEPHYR_CONFIG_FILE = os.path.join(ZEPHYR_BUILD_ZEPHYR_DIR, '.config')
+GENERATED_KCONFIG_FILE = os.path.join(ZEPHYR_BUILD_ZEPHYR_DIR, '.config')

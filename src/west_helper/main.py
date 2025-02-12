@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
 import sys
+import os
 import subprocess
 import threading
 import queue
-import yaml
-import os
 from datetime import datetime
+import yaml
+import filecmp
+import hashlib  # Add to imports at top
 
-from .config import ZEPHYR_BASE, ZEPHYR_CONFIG_FILE
+from .config import ZEPHYR_BASE, GENERATED_KCONFIG_FILE
 from .constants import PENDING_RESOLUTION_FILE
 from .environment import verify_required_execution_environment
 from .patterns import filter_output, save_error_patterns
@@ -16,60 +18,88 @@ from .watcher import stream_watcher
 from .utils import get_pattern_hash, print_message, update_pattern_hashes
 
 
-pattern_matched_local = False
-
-
 def save_build_config(app_source_dir: str) -> None:
-    """
-    Save the Zephyr build configuration file to the current application source directory
-    with the purpose of comparing the previous .config with the any new .config after using menuconfig.
+    '''
+    Save the Zephyr Kconfig generated build configuration file to the current application source directory
+    with the purpose of comparing the previous .config with the any new .config after each build.
 
     Args:
         app_source_dir (str): The path to the application source directory.
-    """
-    if os.path.exists(app_source_dir):
-        print_message(f"Building app source: {app_source_dir}")
-    else:
-        print_message(f"The app source appears to be missing {app_source_dir}<br>Something's not right.")
-        print_message("Exiting.<br>Please try again.")
+    '''
+    
+    if not os.path.exists(app_source_dir):
+        print_message(f"The app source folder appears to be missing {app_source_dir}<br>Something's not right.")
         sys.exit(1)
 
-    if os.path.exists(ZEPHYR_CONFIG_FILE):
-        pass
-        # print_message(f"Found the previous builds' generated Kconfig file: {ZEPHYR_CONFIG_FILE}")
-    else:
-        print_message(f"{ZEPHYR_CONFIG_FILE} not found - can't save it if isn't there.<br>Skipping this step.")
+    if not os.path.exists(GENERATED_KCONFIG_FILE):
+        # print_message(f"{GENERATED_KCONFIG_FILE} not found - can't save it if isn't there.<br>Skipping this step.")
         return
 
-    timestamp = datetime.now().strftime("%b-%d-%Y_%H:%M:%S")
-    config_filename = f".config-{timestamp}"
-    config_filepath = os.path.join(app_source_dir, config_filename)
-    try:
-        with open(config_filepath, 'w') as f:
-            # Copy the ZEPHYR_CONFIG_FILE file to the app source directory with the timestamped filename
-            with open(ZEPHYR_CONFIG_FILE, 'r') as zephyr_config_file:
-                f.write(zephyr_config_file.read())
+    # Find the most recently saved .config file
+    saved_configs = [f for f in os.listdir(app_source_dir) if f.startswith('.config-')]
+    
+    if not saved_configs:
+        print_message("No previous configs found - saving new config")
+        save_dot_config(app_source_dir)
+    else:
+        # Sort configs by filename timestamp
+        saved_configs.sort(key=parse_config_timestamp, reverse=True)
+        most_recent_config = saved_configs[0]
+        most_recent_config_path = os.path.join(app_source_dir, most_recent_config)
+        
+        # print_message(f"Comparing {GENERATED_KCONFIG_FILE} with most recent config: {most_recent_config_path}")
+        
+        if filecmp.cmp(most_recent_config_path, GENERATED_KCONFIG_FILE, shallow=False):
+            print_message(f"Nothing new in {GENERATED_KCONFIG_FILE} - skipping save")
+            return
+        else:
+            save_dot_config(app_source_dir)
 
-        print_message(f"Copied previous builds' generated Kconfig file to {config_filepath}")
-    except Exception as e:
-        print_message(
-            f"There was an error attempting to save the previous builds' Kconfig generated file to "
-            f"{config_filepath}: {e}<br>You might wanna get that looked at"
-        )
+
+def save_dot_config(app_source_dir: str) -> None:
+        timestamp = datetime.now().strftime("%b-%d-%Y_%H:%M:%S")
+        config_filename = f".config-{timestamp}"
+        config_filepath = os.path.join(app_source_dir, config_filename)
+        try:
+            with open(GENERATED_KCONFIG_FILE, 'r') as src, open(config_filepath, 'w') as dst:
+                dst.write(src.read())
+            # print_message(f"Saved new config to {config_filepath}")
+        except (OSError, IOError) as e:
+            print_message(f"Error saving config: {e}")
+        return        
+
+
+def parse_config_timestamp(filename):
+    """Parse timestamp from .config filename"""
+    try:
+        # Extract timestamp portion after .config-
+        timestamp_str = filename.split('.config-')[1]
+        return datetime.strptime(timestamp_str, "%b-%d-%Y_%H:%M:%S")
+    except (IndexError, ValueError):
+        return datetime.min
 
 
 def handle_west_command(args, message_queue, unmatched_error_message):
+    ''' handle_west_command '''
     process = subprocess.Popen(['west'] + args[1:], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     stdout_thread = threading.Thread(target=stream_watcher, args=(process.stdout, 'stdout', message_queue))
     stderr_thread = threading.Thread(target=stream_watcher, args=(process.stderr, 'stderr', message_queue))
     stdout_thread.start()
     stderr_thread.start()
-    process.wait()
+    
+    try:
+        process.wait()
+    except KeyboardInterrupt:
+        print_message("Process interrupted by user")
+        process.terminate()
+        stdout_thread.join()
+        stderr_thread.join()
+        return
+
     stdout_thread.join()
     stderr_thread.join()
 
     new_patterns = {}
-    pattern_matched_local = False
 
     while not message_queue.empty():
         pattern_name, pattern = message_queue.get()
@@ -90,31 +120,35 @@ def handle_west_command(args, message_queue, unmatched_error_message):
     if new_patterns:
         if os.path.exists(PENDING_RESOLUTION_FILE):
             try:
-                with open(PENDING_RESOLUTION_FILE, 'r') as f:
+                with open(PENDING_RESOLUTION_FILE, 'r', encoding='utf-8') as f:
                     existing_patterns = yaml.safe_load(f) or {}
             except (yaml.YAMLError, FileNotFoundError) as e:
                 print_message(f"Error loading {PENDING_RESOLUTION_FILE}: {e}")
                 existing_patterns = {}
+            except (PermissionError) as e:
+                print_message(f"Permission error reading {PENDING_RESOLUTION_FILE}: {e}")
+                existing_patterns = {}
         else:
             existing_patterns = {}
-        existing_patterns.update(new_patterns)
-        save_error_patterns(existing_patterns, PENDING_RESOLUTION_FILE)
-
-    if not pattern_matched_local:
-        print_message(f"No matching pattern found for the current {unmatched_error_message.lower()}.")
+            existing_patterns.update(new_patterns)
+            save_error_patterns(existing_patterns, PENDING_RESOLUTION_FILE)
 
 
 def handle_west_build(args, message_queue):
+    ''' handle_west_build '''
     app_source_dir = args[4]
-    save_build_config(app_source_dir)
+    
     handle_west_command(args, message_queue, 'Unmatched build error')
+    save_build_config(app_source_dir)
 
 
 def handle_west_flash(args, message_queue):
+    ''' handle_west_flash '''
     handle_west_command(args, message_queue, 'Unmatched flash error')
 
 
 def handle_west_espressif_monitor(args, message_queue):
+    ''' handle_west_espressif_monitor '''
     print_message("Handling west espressif monitor command")
     handle_west_command(args, message_queue, 'Unmatched espressif monitor error')
 
@@ -143,6 +177,7 @@ def pass_it_thru(args):
 
 
 def main():
+    '''Main function'''
     message_queue = queue.Queue()
     verify_required_execution_environment()
 
@@ -152,7 +187,7 @@ def main():
         sys.exit(1)
 
     if len(sys.argv) < 2:
-        print_message("Nothing for us to do here. Passing thru.")
+        # print_message("Nothing for us to do here. Passing thru.")
         subprocess.run(['west'], check=True)
         return
 
@@ -173,6 +208,7 @@ def main():
         pass_it_thru(sys.argv)
 
     update_pattern_hashes()
+
 
 if __name__ == "__main__":
     main()
