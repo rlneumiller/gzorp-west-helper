@@ -1,0 +1,76 @@
+{
+  "patterns": [
+    {
+      "context": {
+        "environment": {
+          "properties": {
+            "region": "us-west-2",
+            "service_tier": "production",
+            "runtime": "node-16",
+            "deployment_platform": "kubernetes"
+          },
+          "variables": {
+            "pod_name": "auth-service-7d4f89c5b5-2nlzx",
+            "replica_count": 3,
+            "memory_limit": "512Mi",
+            "cpu_limit": "200m"
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "environment": {
+          "properties": {
+            "application_type": "mobile",
+            "platform": "ios",
+            "app_distribution": "app_store",
+            "minimum_os_version": "15.0"
+          },
+          "variables": {
+            "device_model": "iPhone14,2",
+            "available_storage": "45.2GB",
+            "battery_level": 72,
+            "network_type": "5G"
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "environment": {
+          "properties": {
+            "system_type": "embedded",
+            "product_family": "sensor_array",
+            "power_source": "battery",
+            "communication_protocol": "modbus"
+          },
+          "variables": {
+            "operating_mode": "low_power",
+            "sensor_count": 4,
+            "sample_rate": "1Hz",
+            "power_level": "3.3V"
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "environment": {
+          "properties": {
+            "platform": "desktop",
+            "distribution_channel": "enterprise",
+            "update_mechanism": "auto",
+            "license_type": "subscription"
+          },
+          "variables": {
+            "screen_resolution": "1920x1080",
+            "locale": "en_US",
+            "timezone": "America/Los_Angeles",
+            "active_plugins": ["spell_check", "pdf_export"]
+          }
+        }
+      }
+    }
+  ]
+}
