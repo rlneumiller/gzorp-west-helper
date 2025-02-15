@@ -99,7 +99,8 @@ def update_pattern_hashes():
     modified_hashes = []
     for root, _, files in os.walk(PATTERNS_DIR):
         for file in files:
-            file_path = os.path.join(root, file)
+            if file.endswith('.yaml') or file.endswith('.yml'):
+                file_path = os.path.join(root, file)
 
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = yaml.safe_load(f)
