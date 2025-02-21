@@ -69,7 +69,7 @@ def get_pattern_hash(s: str) -> str:
     return hashlib.md5(s.encode()).hexdigest()
 
 
-def ensure_default_pattern():
+def locate_or_create_default_pattern_file():
     '''Ensure default pattern file exists'''
     if not os.path.exists(PATTERNS_DIR):
         os.makedirs(PATTERNS_DIR)
@@ -95,32 +95,32 @@ def ensure_default_pattern():
 def update_pattern_hashes():
     '''Update pattern hashes in pattern files'''
     print_message("Checking for pattern hashes that need updating...")
-    ensure_default_pattern()
+    locate_or_create_default_pattern_file()
     modified_hashes = []
     for root, _, files in os.walk(PATTERNS_DIR):
         for file in files:
             if file.endswith('.yaml') or file.endswith('.yml'):
                 file_path = os.path.join(root, file)
 
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = yaml.safe_load(f)
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f)
 
-            updated_data = {}
-            for pattern_key, pattern_value in data.items():
-                if isinstance(pattern_value, dict) and 'pattern' in pattern_value:
-                    pattern_text = pattern_value['pattern']
-                    pattern_hash = get_pattern_hash(pattern_text)
-                    if pattern_key != pattern_hash:
-                        print_message(f"Updating pattern hash: {pattern_key} -> {pattern_hash}")
-                        updated_data[pattern_hash] = pattern_value
-                        modified_hashes.append((file_path, pattern_text, pattern_hash))
-                    else:
-                        updated_data[pattern_key] = pattern_value
+                updated_data = {}
+                for pattern_key, pattern_value in data.items():
+                    if isinstance(pattern_value, dict) and 'pattern' in pattern_value:
+                        pattern_text = pattern_value['pattern']
+                        pattern_hash = get_pattern_hash(pattern_text)
+                        if pattern_key != pattern_hash:
+                            print_message(f"Updating pattern hash: {pattern_key} -> {pattern_hash}")
+                            updated_data[pattern_hash] = pattern_value
+                            modified_hashes.append((file_path, pattern_text, pattern_hash))
+                        else:
+                            updated_data[pattern_key] = pattern_value
 
-            # Fix: Use dump() instead of safe_dump() and set sort_keys=False
-            with open(file_path, 'w', encoding='utf-8') as f:
-                print_message(f"Checking pattern hashes in {file_path}")
-                yaml.dump(updated_data, f, default_flow_style=False, sort_keys=False)
+                # Fix: Use dump() instead of safe_dump() and set sort_keys=False
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    print_message(f"Checking pattern hashes in {file_path}")
+                    yaml.dump(updated_data, f, default_flow_style=False, sort_keys=False)
 
     print_message(f"Updated {len(modified_hashes)} pattern hashes.")
     return modified_hashes
